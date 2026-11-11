@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>马来西亚购房 DSR 计算器</title>
+<meta name="author" content="King Gan">
+<meta name="description" content="Malaysia home loan DSR calculator with stamp duty estimate / 马来西亚购房 DSR 与印花税计算器">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one calm form card on the left (3 steps), a deep-green result card on the right that stays in view; on phones the result follows the form and a bottom bar shows the DSR. */
+:root {
+  --bg: #edf2ef;
+  --surface: #ffffff;
+  --surface-2: #f4f7f5;
+  --ink: #12241e;
+  --muted: #5f716a;
+  --line: #dde5e0;
+  --accent: #0f6e56;
+  --accent-soft: #e0efe9;
+  --accent-on: #ffffff;
+  --hero: #0e3b31;
+  --hero-ink: #f1f7f4;
+  --hero-muted: #a9c4b9;
+  --hero-line: #24574a;
+  --hero-track: #1d4c40;
+  --gold: #e8b45a;
+  --seg-commit: #7fa598;
+  --seg-new: #e8b45a;
+  --good: #5fd39a;
+  --warn: #f2c14e;
+  --bad: #ff8f80;
+  --font: "Plus Jakarta Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1513; --surface: #15201c; --surface-2: #1b2823; --ink: #e6eeea; --muted: #97aaa2; --line: #273631;
+    --accent: #52c49f; --accent-soft: #1b3a31; --accent-on: #06261d; --hero: #0f2f27; --hero-ink: #eef6f2; --hero-muted: #9dbbb0;
+    --hero-line: #22493e; --hero-track: #1c4238; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1513; --surface: #15201c; --surface-2: #1b2823; --ink: #e6eeea; --muted: #97aaa2; --line: #273631;
+  --accent: #52c49f; --accent-soft: #1b3a31; --accent-on: #06261d; --hero: #0f2f27; --hero-ink: #eef6f2; --hero-muted: #9dbbb0;
+  --hero-line: #22493e; --hero-track: #1c4238; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+/* Header */
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.head-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 320px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 0; font-size: clamp(24px, 4.2vw, 34px); line-height: 1.15; font-weight: 800; letter-spacing: -.01em; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 56ch; }
+
+/* Segmented controls */
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 600 13.5px var(--font); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-on); }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 22px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Form card */
+.form { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; min-width: 0; }
+.step { padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+.step + .step { border-top: 1px solid var(--line); }
+.step-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+.step-title { display: flex; align-items: center; gap: 12px; }
+.badge { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; font-size: 14px; flex: none; }
+h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.field small { font-size: 12px; color: var(--muted); }
+.inp { display: flex; align-items: center; background: var(--surface-2); border: 1.5px solid transparent; border-radius: 11px; transition: border-color .15s, background .15s; }
+.inp:focus-within { border-color: var(--accent); background: var(--surface); }
+.inp .pre, .inp .suf { padding: 0 12px; color: var(--muted); font-size: 13.5px; font-weight: 600; }
+.inp .pre { padding-right: 0; }
+.inp .suf { padding-left: 0; }
+.inp input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: 600 16px var(--font); font-variant-numeric: tabular-nums; padding: 11px 12px; outline: none; }
+
+details.more { border-radius: 12px; background: var(--surface-2); }
+details.more > summary { list-style: none; cursor: pointer; padding: 11px 14px; font-size: 13.5px; font-weight: 600; color: var(--accent); display: flex; align-items: center; gap: 8px; border-radius: 12px; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "+"; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: var(--accent-soft); font-size: 14px; line-height: 1; }
+details.more[open] > summary::before { content: "−"; }
+details.more .more-body { padding: 4px 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+details.more .inp { background: var(--surface); border-color: var(--line); }
+details.more .inp:focus-within { border-color: var(--accent); }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+table.tiers { width: 100%; border-collapse: collapse; }
+.tiers th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 0 4px 6px; }
+.tiers td { padding: 3px 4px; }
+.tiers .inp input { padding: 8px 10px; font-size: 14.5px; }
+
+/* Result card */
+.result { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); background: var(--hero); color: var(--hero-ink); border-radius: 18px; overflow: hidden; }
+@media (max-width: 900px) { .result { position: static; } }
+.r-top { padding: 22px 22px 18px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.r-label { align-self: stretch; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.r-label span { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--hero-muted); font-weight: 700; }
+.pill { font-size: 12.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: color-mix(in srgb, currentColor 16%, transparent); }
+.pill.ok { color: var(--good); } .pill.edge { color: var(--warn); } .pill.no { color: var(--bad); }
+.gauge { position: relative; width: 100%; max-width: 270px; margin-top: 8px; }
+.gauge svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gauge-num { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.gauge-num b { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.gauge-num span { font-size: 12.5px; color: var(--hero-muted); margin-top: 4px; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--hero-muted); margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+.legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: var(--c); }
+
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--hero-line); }
+.stat { padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; text-align: center; min-width: 0; }
+.stat + .stat { border-left: 1px solid var(--hero-line); }
+.stat .k { font-size: 11.5px; color: var(--hero-muted); font-weight: 600; }
+.stat .v { font-size: 16.5px; font-weight: 800; overflow-wrap: anywhere; }
+.stat .s { font-size: 11px; color: var(--hero-muted); }
+.stat.gold .v { color: var(--gold); }
+@media (max-width: 380px) { .stats { grid-template-columns: minmax(0, 1fr); } .stat + .stat { border-left: 0; border-top: 1px solid var(--hero-line); } }
+
+.r-body { background: var(--surface); color: var(--ink); padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 16px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 18px 18px; }
+.r-body h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+dl.kv { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; font-size: 14px; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; text-align: right; font-weight: 600; }
+dl.kv .t { border-top: 1px dashed var(--line); padding-top: 8px; color: var(--ink); font-weight: 700; }
+table.sens { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.sens th, .sens td { padding: 6px 4px; text-align: right; border-bottom: 1px solid var(--line); }
+.sens th { font-size: 12px; color: var(--muted); font-weight: 600; }
+.sens th:first-child, .sens td:first-child { text-align: left; }
+.sens tr.cur td { font-weight: 800; }
+.sens td .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--c); }
+.disclaimer { font-size: 12px; color: var(--muted); margin: 0; }
+
+.credit { text-align: center; font-size: 12.5px; color: var(--muted); }
+
+/* Phone bottom bar */
+.mini { display: none; }
+@media (max-width: 900px) {
+  .mini { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--hero); color: var(--hero-ink);
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 -6px 20px rgb(0 0 0 / .18); }
+  .mini .mv { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; min-width: 0; }
+  .mini b { font-size: 20px; font-weight: 800; }
+  .mini small { color: var(--hero-muted); font-size: 12px; }
+  .mini button { border: 0; background: var(--gold); color: #1d1405; font: 700 13px var(--font); padding: 8px 14px; border-radius: 999px; cursor: pointer; flex: none; }
+  body { padding-bottom: calc(124px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: no-preference) { .gauge path.seg-arc { transition: d .3s ease; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="head-text">
+      <span class="eyebrow" data-i18n="eyebrow"></span>
+      <h1 data-i18n="title"></h1>
+      <p class="lede" data-i18n="lede"></p>
+    </div>
+    <div class="seg" role="group" aria-label="Language / 语言">
+      <button type="button" id="langZh" aria-pressed="true">中文</button>
+      <button type="button" id="langEn" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <form class="form" id="form" autocomplete="off">
+      <!-- Step 1 -->
+      <section class="step">
+        <div class="step-head">
+          <div class="step-title"><span class="badge">1</span><div><h2 data-i18n="s1"></h2><p class="sub" data-i18n="s1hint"></p></div></div>
+          <div class="seg" role="group" data-i18n-aria="appType">
+            <button type="button" id="solo" aria-pressed="true" data-i18n="solo"></button>
+            <button type="button" id="joint" aria-pressed="false" data-i18n="joint"></button>
+          </div>
+        </div>
+        <div class="fields">
+          <div class="field"><label for="net1" data-i18n="net1"></label><div class="inp"><span class="pre">RM</span><input id="net1" data-money inputmode="decimal" value="5,800"></div></div>
+          <div class="field" id="net2Field" hidden><label for="net2" data-i18n="net2"></label><div class="inp"><span class="pre">RM</span><input id="net2" data-money inputmode="decimal" value="3,500"></div></div>
+        </div>
+        <details class="more">
+          <summary data-i18n="moreIncome"></summary>
+          <div class="more-body">
+            <div class="fields">
+              <div class="field"><label for="vari" data-i18n="vari"></label><div class="inp"><span class="pre">RM</span><input id="vari" data-money inputmode="decimal" value="0"></div><small data-i18n="variHint"></small></div>
+              <div class="field"><label for="variPct" data-i18n="recog"></label><div class="inp"><input id="variPct" inputmode="decimal" value="50"><span class="suf">%</span></div></div>
+              <div class="field"><label for="rent" data-i18n="rent"></label><div class="inp"><span class="pre">RM</span><input id="rent" data-money inputmode="decimal" value="0"></div></div>
+              <div class="field"><label for="rentPct" data-i18n="recog"></label><div class="inp"><input id="rentPct" inputmode="decimal" value="80"><span class="suf">%</span></div></div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- Step 2 -->
+      <section class="step">
+        <div class="step-title"><span class="badge">2</span><div><h2 data-i18n="s2"></h2><p class="sub" data-i18n="s2hint"></p></div></div>
+        <div class="fields">
+          <div class="field"><label for="dHome" data-i18n="dHome"></label><div class="inp"><span class="pre">RM</span><input id="dHome" data-money inputmode="decimal" value=""></div></div>
+          <div class="field"><label for="dCar" data-i18n="dCar"></label><div class="inp"><span class="pre">RM</span><input id="dCar" data-money inputmode="decimal" value="850"></div></div>
+          <div class="field"><label for="dPersonal" data-i18n="dPersonal"></label><div class="inp"><span class="pre">RM</span><input id="dPersonal" data-money inputmode="decimal" value=""></div></div>
+          <div class="field"><label for="dPtptn" data-i18n="dPtptn"></label><div class="inp"><span class="pre">RM</span><input id="dPtptn" data-money inputmode="decimal" value="150"></div></div>
+          <div class="field"><label for="dCard" data-i18n="dCard"></label><div class="inp"><span class="pre">RM</span><input id="dCard" data-money inputmode="decimal" value="3,000"></div><small id="cardHint"></small></div>
+          <div class="field"><label for="dOther" data-i18n="dOther"></label><div class="inp"><span class="pre">RM</span><input id="dOther" data-money inputmode="decimal" value=""></div></div>
+        </div>
+      </section>
+
+      <!-- Step 3 -->
+      <section class="step">
+        <div class="step-head">
+          <div class="step-title"><span class="badge">3</span><div><h2 data-i18n="s3"></h2></div></div>
+          <div class="seg" role="group" data-i18n-aria="nth">
+            <button type="button" data-nth="1" aria-pressed="true" data-i18n="n1"></button>
+            <button type="button" data-nth="2" aria-pressed="false" data-i18n="n2"></button>
+            <button type="button" data-nth="3" aria-pressed="false" data-i18n="n3"></button>
+          </div>
+        </div>
+        <div class="fields">
+          <div class="field"><label for="price" data-i18n="price"></label><div class="inp"><span class="pre">RM</span><input id="price" data-money inputmode="decimal" value="500,000"></div></div>
+          <div class="field"><label for="rate" data-i18n="rate"></label><div class="inp"><input id="rate" inputmode="decimal" value="4.2"><span class="suf">%</span></div></div>
+          <div class="field"><label for="tenure" data-i18n="tenure"></label><div class="inp"><input id="tenure" inputmode="numeric" value="35"><span class="suf" data-i18n="yr"></span></div><small id="tenureHint"></small></div>
+        </div>
+        <div class="field">
+          <label data-i18n="buyer"></label>
+          <div class="seg" role="group" data-i18n-aria="buyer" style="align-self:flex-start">
+            <button type="button" id="buyerFirst" aria-pressed="true" data-i18n="buyerFirst"></button>
+            <button type="button" id="buyerOther" aria-pressed="false" data-i18n="buyerOther"></button>
+          </div>
+        </div>
+        <details class="more">
+          <summary data-i18n="moreLoan"></summary>
+          <div class="more-body">
+            <div class="fields">
+              <div class="field"><label for="margin" data-i18n="margin"></label><div class="inp"><input id="margin" inputmode="decimal" value="90"><span class="suf">%</span></div><small id="marginHint"></small></div>
+              <div class="field"><label for="age" data-i18n="age"></label><div class="inp"><input id="age" inputmode="numeric" value="30"></div></div>
+              <div class="field"><label for="mrta" data-i18n="mrta"></label><div class="inp"><span class="pre">RM</span><input id="mrta" data-money inputmode="decimal" value="0"></div></div>
+            </div>
+          </div>
+        </details>
+        <details class="more">
+          <summary data-i18n="bank"></summary>
+          <div class="more-body">
+            <div class="seg" role="group" data-i18n-aria="bank" style="align-self:flex-start">
+              <button type="button" id="presetStd" aria-pressed="true" data-i18n="presetStd"></button>
+              <button type="button" id="presetSafe" aria-pressed="false" data-i18n="presetSafe"></button>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="tiers">
+                <thead><tr><th data-i18n="tierFrom"></th><th data-i18n="tierLim"></th></tr></thead>
+                <tbody>
+                  <tr><td><div class="inp"><span class="pre">RM</span><input id="m0" value="0" disabled aria-label="tier 1"></div></td><td><div class="inp"><input id="t0" inputmode="decimal" aria-label="limit 1"><span class="suf">%</span></div></td></tr>
+                  <tr><td><div class="inp"><span class="pre">RM</span><input id="m1" data-money inputmode="decimal" aria-label="tier 2"></div></td><td><div class="inp"><input id="t1" inputmode="decimal" aria-label="limit 2"><span class="suf">%</span></div></td></tr>
+                  <tr><td><div class="inp"><span class="pre">RM</span><input id="m2" data-money inputmode="decimal" aria-label="tier 3"></div></td><td><div class="inp"><input id="t2" inputmode="decimal" aria-label="limit 3"><span class="suf">%</span></div></td></tr>
+                  <tr><td><div class="inp"><span class="pre">RM</span><input id="m3" data-money inputmode="decimal" aria-label="tier 4"></div></td><td><div class="inp"><input id="t3" inputmode="decimal" aria-label="limit 4"><span class="suf">%</span></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note" data-i18n="bankNote"></p>
+          </div>
+        </details>
+      </section>
+    </form>
+
+    <aside class="result" id="result" aria-live="polite">
+      <div class="r-top">
+        <div class="r-label"><span data-i18n="rTitle"></span><b class="pill ok" id="verdict"></b></div>
+        <div class="gauge">
+          <svg viewBox="0 0 240 132" aria-hidden="true">
+            <path id="gTrack" fill="none" stroke="var(--hero-track)" stroke-width="18" stroke-linecap="round"></path>
+            <path id="gCommit" class="seg-arc" fill="none" stroke="var(--seg-commit)" stroke-width="18"></path>
+            <path id="gNew" class="seg-arc" fill="none" stroke="var(--seg-new)" stroke-width="18"></path>
+            <line id="gLimit" stroke="var(--hero-ink)" stroke-width="2.5" stroke-linecap="round"></line>
+          </svg>
+          <div class="gauge-num"><b id="dsrNum">–</b><span id="dsrLim"></span></div>
+        </div>
+        <div class="legend">
+          <span style="--c: var(--seg-commit)" data-i18n="legendCommit"></span>
+          <span style="--c: var(--seg-new)" data-i18n="legendNew"></span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="k" data-i18n="kInst"></span><span class="v" id="sInst">–</span><span class="s" id="sInstSub"></span></div>
+        <div class="stat gold"><span class="k" data-i18n="kMax"></span><span class="v" id="sMax">–</span><span class="s" id="sMaxSub"></span></div>
+        <div class="stat"><span class="k" data-i18n="kNeed"></span><span class="v" id="sNeed">–</span><span class="s" data-i18n="kNeedSub"></span></div>
+      </div>
+      <div class="r-body">
+        <div>
+          <h3 data-i18n="breakdown"></h3>
+          <dl class="kv">
+            <dt data-i18n="bLoan"></dt><dd id="bLoan">–</dd>
+            <dt data-i18n="bDown"></dt><dd id="bDown">–</dd>
+            <dt data-i18n="bInc"></dt><dd id="bInc">–</dd>
+            <dt data-i18n="bCommit"></dt><dd id="bCommit">–</dd>
+            <dt data-i18n="bNew"></dt><dd id="bNew">–</dd>
+            <dt class="t" data-i18n="bTotal"></dt><dd class="t" id="bTotal">–</dd>
+            <dt data-i18n="bNdi"></dt><dd id="bNdi">–</dd>
+          </dl>
+        </div>
+        <div>
+          <h3 data-i18n="taxTitle"></h3>
+          <dl class="kv">
+            <dt data-i18n="tMot"></dt><dd id="tMot">–</dd>
+            <dt data-i18n="tLoan"></dt><dd id="tLoan">–</dd>
+            <dt class="t" data-i18n="tTotal"></dt><dd class="t" id="tTotal">–</dd>
+            <dt class="t" data-i18n="tCash"></dt><dd class="t" id="tCash">–</dd>
+          </dl>
+          <p class="note" id="taxNote" style="margin-top:8px"></p>
+        </div>
+        <div>
+          <h3 data-i18n="rateTitle"></h3>
+          <table class="sens"><thead><tr><th data-i18n="thRate"></th><th data-i18n="thInst"></th><th data-i18n="thDsr"></th></tr></thead><tbody id="sens"></tbody></table>
+        </div>
+        <p class="disclaimer" data-i18n="disclaimer"></p>
+      </div>
+    </aside>
+  </div>
+  <footer class="credit" data-i18n="credit"></footer>
+</div>
+
+<div class="mini" aria-hidden="true">
+  <div class="mv"><span><small>DSR </small><b id="mDsr">–</b></span><span><small data-i18n="kMax"></small> <b id="mMax" style="color:var(--gold)">–</b></span></div>
+  <button type="button" id="mGo" tabindex="-1" data-i18n="mini"></button>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  // ---------- i18n ----------
+  const T = {
+    zh: {
+      eyebrow: "Debt Service Ratio · 房贷评估",
+      title: "马来西亚购房 DSR 计算器",
+      lede: "填三样东西：收入、现有债务、想买的房子。马上看到 DSR、每月供款，以及最多能买多少钱的房子。",
+      appType: "申请方式", solo: "单独申请", joint: "联名申请",
+      s1: "你的收入", s1hint: "填工资单上的 Net Pay（已扣 EPF、SOCSO、PCB）",
+      net1: "你的每月净收入", net2: "联名人每月净收入",
+      moreIncome: "其他收入（佣金、租金等）",
+      vari: "浮动收入（月均）", variHint: "佣金 / OT / 奖金", recog: "银行认可比例", rent: "租金收入",
+      s2: "现有每月债务", s2hint: "参考 CCRIS 报告，没有就留空",
+      dHome: "现有房贷", dCar: "车贷", dPersonal: "个人贷款", dPtptn: "PTPTN 学贷", dCard: "信用卡余额", dOther: "其他分期 / BNPL",
+      cardHint: "按余额 5% 计入：{v}/月",
+      buyer: "买家身份", buyerFirst: "首次购房（大马公民）", buyerOther: "其他",
+      taxTitle: "印花税（估算）", tMot: "转让印花税 (MOT)", tLoan: "贷款协议印花税", tTotal: "印花税合计", tCash: "需准备现金",
+      taxExempt: "首购豁免：房价 ≤ RM500,000，转让和贷款印花税全免（现行优惠至 2027 年底）。",
+      taxOver: "房价超过 RM500,000，不适用首购豁免，按正常税率计算。",
+      taxStd: "按正常税率计算：转让 1% / 2% / 3% / 4% 分级，贷款协议 0.5%。",
+      taxBase: "需准备现金 = 首付 + 印花税，未含律师费和其他杂费。外国买家税率不同，本计算器不适用。",
+      s3: "想买的房子", nth: "第几套房", n1: "第 1 套", n2: "第 2 套", n3: "第 3 套+",
+      price: "房价", rate: "利率（每年）", tenure: "贷款年限", yr: "年",
+      tenureHint: "按年龄最长 {n} 年",
+      moreLoan: "更多贷款设置", margin: "贷款成数", marginHint: "第 {k} 套最高 {n}%", age: "主申请人年龄", mrta: "MRTA / MLTA 加进贷款",
+      bank: "银行 DSR 上限设置", presetStd: "标准", presetSafe: "保守",
+      tierFrom: "认可收入从", tierLim: "DSR 上限",
+      bankNote: "按认可收入分级（联名为两人合计）。各银行和时期的上限都不同，可按实际情况修改。",
+      rTitle: "评估结果",
+      credit: "设计者：King Gan · 反馈或合作请联络 014-625 8495",
+      noTerm: "年限无效（年龄过大或未填年限）",
+      ok: "在上限以内", edge: "接近上限", over: "超出上限 {n}%", none: "请先填写收入",
+      limit: "银行上限 {n}%",
+      legendCommit: "现有债务", legendNew: "新房贷",
+      kInst: "每月供款", kMax: "最多可买", kNeed: "最少需要收入", kNeedSub: "才够买这间",
+      instSub: "贷 {v}", maxSub: "按 {n}% 上限",
+      breakdown: "计算明细", bLoan: "贷款额", bDown: "首付", bInc: "认可收入", bCommit: "现有债务",
+      bNew: "新房贷月供", bTotal: "每月债务合计", bNdi: "扣债后余钱 (NDI)",
+      rateTitle: "如果利率上升", thRate: "利率", thInst: "月供", thDsr: "DSR", cur: "当前",
+      disclaimer: "仅供估算，不代表银行审批结果。实际还会看 CCRIS/CTOS、工作稳定性、房产估价（成数按 SPA 价与估价较低者计）等。",
+      mini: "看结果",
+    },
+    en: {
+      eyebrow: "Debt Service Ratio · Home Loan Check",
+      title: "Malaysia Home Loan DSR Calculator",
+      lede: "Fill in three things: your income, current debts and the home you want. See your DSR, monthly instalment and the most you can afford right away.",
+      appType: "Application type", solo: "Single", joint: "Joint",
+      s1: "Your income", s1hint: "Use the Net Pay on your payslip (after EPF, SOCSO, PCB)",
+      net1: "Your monthly net income", net2: "Joint applicant's net income",
+      moreIncome: "Other income (commission, rental, etc.)",
+      vari: "Variable income (monthly avg)", variHint: "Commission / OT / bonus", recog: "Bank recognises", rent: "Rental income",
+      s2: "Current monthly debts", s2hint: "Check your CCRIS report; leave blank if none",
+      dHome: "Existing home loan", dCar: "Car loan (HP)", dPersonal: "Personal loan", dPtptn: "PTPTN", dCard: "Credit card balance", dOther: "Other / BNPL",
+      cardHint: "Counted at 5% of balance: {v}/mo",
+      buyer: "Buyer type", buyerFirst: "First-time buyer (Malaysian)", buyerOther: "Other",
+      taxTitle: "Stamp duty (estimate)", tMot: "Transfer duty (MOT)", tLoan: "Loan agreement duty", tTotal: "Total stamp duty", tCash: "Cash to prepare",
+      taxExempt: "First-home exemption: price up to RM500,000, both transfer and loan duty waived (current relief runs to end-2027).",
+      taxOver: "Price is above RM500,000, so the first-home exemption does not apply. Normal rates used.",
+      taxStd: "Normal rates: transfer duty 1% / 2% / 3% / 4% tiers, loan agreement 0.5%.",
+      taxBase: "Cash to prepare = downpayment + stamp duty; legal fees and other costs not included. Foreign buyers pay different rates and are not covered here.",
+      s3: "The home you want", nth: "Which property", n1: "1st home", n2: "2nd", n3: "3rd+",
+      price: "Property price", rate: "Interest rate (p.a.)", tenure: "Loan tenure", yr: "yrs",
+      tenureHint: "Max {n} years for your age",
+      moreLoan: "More loan settings", margin: "Margin of finance", marginHint: "Max {n}% for property #{k}", age: "Main applicant's age", mrta: "MRTA / MLTA financed",
+      bank: "Bank DSR limits", presetStd: "Standard", presetSafe: "Conservative",
+      tierFrom: "Recognised income from", tierLim: "DSR limit",
+      bankNote: "Tiers go by recognised income (combined for joint). Limits differ between banks and over time; adjust them to match.",
+      rTitle: "Your result",
+      credit: "Designed by King Gan · Feedback or collaboration: 014-625 8495",
+      noTerm: "No valid loan term (age too high or tenure blank)",
+      ok: "Within limit", edge: "Close to limit", over: "Over limit by {n}%", none: "Enter your income first",
+      limit: "Bank limit {n}%",
+      legendCommit: "Current debts", legendNew: "New home loan",
+      kInst: "Monthly instalment", kMax: "Max price", kNeed: "Income needed", kNeedSub: "for this home",
+      instSub: "Loan {v}", maxSub: "At {n}% limit",
+      breakdown: "Breakdown", bLoan: "Loan amount", bDown: "Downpayment", bInc: "Recognised income", bCommit: "Current debts",
+      bNew: "New instalment", bTotal: "Total monthly debts", bNdi: "Left after debts (NDI)",
+      rateTitle: "If interest rates rise", thRate: "Rate", thInst: "Instalment", thDsr: "DSR", cur: "now",
+      disclaimer: "An estimate only, not a bank decision. Banks also look at CCRIS/CTOS, job stability and the property valuation (margin applies to the lower of SPA price and valuation).",
+      mini: "See result",
+    },
+  };
+  let lang = "zh";
+  try { const s = localStorage.getItem("dsr-lang"); if (s === "en" || s === "zh") lang = s; } catch (e) {}
+  const t = (k, vars = {}) => (T[lang][k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v]);
+
+  function applyLang() {
+    document.documentElement.lang = lang === "zh" ? "zh-Hans" : "en";
+    document.title = T[lang].title;
+    document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+    document.querySelectorAll("[data-i18n-aria]").forEach(el => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+    $("langZh").setAttribute("aria-pressed", String(lang === "zh"));
+    $("langEn").setAttribute("aria-pressed", String(lang === "en"));
+    calc();
+  }
+  function setLang(l) { lang = l; try { localStorage.setItem("dsr-lang", l); } catch (e) {} applyLang(); }
+  $("langZh").onclick = () => setLang("zh");
+  $("langEn").onclick = () => setLang("en");
+
+  // ---------- helpers ----------
+  const num = v => { const n = parseFloat(String(v).replace(/[,\s]/g, "")); return isFinite(n) ? n : 0; };
+  const val = id => num($(id).value);
+  const rm = v => "RM " + Math.round(v).toLocaleString("en-MY");
+  const rm2 = v => "RM " + v.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const rmShort = v => v >= 1e6 ? "RM " + (v / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M" : rm(v);
+  const pct = v => isFinite(v) ? v.toFixed(1) + "%" : "–";
+  document.querySelectorAll("input[data-money]").forEach(el => el.addEventListener("blur", () => {
+    if (el.value.trim() === "") return;
+    el.value = num(el.value).toLocaleString("en-MY", { maximumFractionDigits: 2 });
+  }));
+
+  const pmt = (P, annual, years) => {
+    const n = Math.round(years * 12); if (P <= 0 || n <= 0) return 0;
+    const r = annual / 1200; return r === 0 ? P / n : P * r / (1 - Math.pow(1 + r, -n));
+  };
+  const pv = (M, annual, years) => {
+    const n = Math.round(years * 12); if (M <= 0 || n <= 0) return 0;
+    const r = annual / 1200; return r === 0 ? M * n : M * (1 - Math.pow(1 + r, -n)) / r;
+  };
+
+  // ---------- toggles ----------
+  let joint = false;
+  function setJoint(on) {
+    joint = on;
+    $("solo").setAttribute("aria-pressed", String(!on));
+    $("joint").setAttribute("aria-pressed", String(on));
+    $("net2Field").hidden = !on;
+    calc();
+  }
+  $("solo").onclick = () => setJoint(false);
+  $("joint").onclick = () => setJoint(true);
+
+  let firstBuyer = true;
+  const setBuyer = on => {
+    firstBuyer = on;
+    $("buyerFirst").setAttribute("aria-pressed", String(on));
+    $("buyerOther").setAttribute("aria-pressed", String(!on));
+    calc();
+  };
+  $("buyerFirst").onclick = () => setBuyer(true);
+  $("buyerOther").onclick = () => setBuyer(false);
+
+  // Stamp duty: MOT 1% / 2% / 3% / 4% bands (per RM100), loan agreement 0.5% (per RM200).
+  const motDuty = p => {
+    const base = Math.ceil(p / 100) * 100;
+    return [[0, 1e5, .01], [1e5, 5e5, .02], [5e5, 1e6, .03], [1e6, Infinity, .04]]
+      .reduce((s, [lo, hi, r]) => s + Math.max(0, Math.min(base, hi) - lo) * r, 0);
+  };
+  const loanDuty = L => Math.ceil(L / 200) * 200 * 0.005;
+
+  let nth = 1, marginTouched = false;
+  const maxMargin = () => nth >= 3 ? 70 : 90;
+  $("margin").addEventListener("input", () => marginTouched = true);
+  $("margin").addEventListener("change", () => { if (val("margin") > maxMargin()) $("margin").value = maxMargin(); calc(); });
+  $("tenure").addEventListener("change", () => {
+    const m = Math.max(0, Math.min(35, 70 - val("age")));
+    if (m > 0 && val("tenure") > m) $("tenure").value = m;
+    calc();
+  });
+  document.querySelectorAll("[data-nth]").forEach(b => b.onclick = () => {
+    nth = +b.dataset.nth;
+    if (nth > 1 && firstBuyer) setBuyer(false);
+    document.querySelectorAll("[data-nth]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    if (!marginTouched || val("margin") > maxMargin()) $("margin").value = maxMargin();
+    calc();
+  });
+
+  // ---------- bank tiers ----------
+  const presets = {
+    std: [[0, 75], [5000, 80], [7000, 85], [9000, 90]],
+    safe: [[0, 40], [3000, 60], [5000, 70], ["", ""]],
+  };
+  function applyPreset(name) {
+    presets[name].forEach(([m, l], i) => { if (i) $("m" + i).value = m === "" ? "" : m.toLocaleString("en-MY"); $("t" + i).value = l; });
+    $("presetStd").setAttribute("aria-pressed", String(name === "std"));
+    $("presetSafe").setAttribute("aria-pressed", String(name === "safe"));
+    calc();
+  }
+  $("presetStd").onclick = () => applyPreset("std");
+  $("presetSafe").onclick = () => applyPreset("safe");
+  function tiers() {
+    const out = [];
+    for (let i = 0; i < 4; i++) {
+      const m = i === 0 ? "0" : $("m" + i).value.trim(), l = $("t" + i).value.trim();
+      if (l === "" || m === "") continue;
+      out.push({ min: num(m), lim: num(l) });
+    }
+    return out.sort((a, b) => a.min - b.min);
+  }
+  const tierLimit = inc => tiers().reduce((lim, x) => inc >= x.min ? x.lim : lim, 0);
+  function requiredIncome(total) {
+    const ts = tiers(); let best = Infinity;
+    ts.forEach((x, i) => {
+      if (x.lim <= 0) return;
+      const next = i + 1 < ts.length ? ts[i + 1].min : Infinity;
+      const I = Math.max(x.min, total / (x.lim / 100));
+      if (I < next) best = Math.min(best, I);
+    });
+    return best;
+  }
+  const statusOf = (d, lim) => !isFinite(d) ? "no" : d > lim ? "no" : d > lim - 5 ? "edge" : "ok";
+  const statusColor = s => s === "ok" ? "var(--accent)" : s === "edge" ? "#c98a12" : "#c0392b";
+
+  // ---------- gauge ----------
+  const CX = 120, CY = 120, R = 96;
+  const pt = f => { const a = Math.PI * (1 - f); return [CX + R * Math.cos(a), CY - R * Math.sin(a)]; };
+  const arc = (a, b) => {
+    a = Math.max(0, Math.min(1, a)); b = Math.max(0, Math.min(1, b));
+    if (b - a < 0.001) return "";
+    const [x1, y1] = pt(a), [x2, y2] = pt(b);
+    return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  };
+  $("gTrack").setAttribute("d", arc(0, 1));
+
+  // ---------- main ----------
+  function calc() {
+    const income = val("net1") + (joint ? val("net2") : 0) + val("vari") * val("variPct") / 100 + val("rent") * val("rentPct") / 100;
+    const limit = tierLimit(income);
+
+    const card = val("dCard") * 0.05;
+    $("cardHint").textContent = t("cardHint", { v: rm2(card) });
+    const commit = val("dHome") + val("dCar") + val("dPersonal") + val("dPtptn") + card + val("dOther");
+
+    const price = val("price"), rate = val("rate"), mrta = val("mrta");
+    const margin = Math.min(val("margin"), maxMargin());
+    $("marginHint").textContent = t("marginHint", { n: maxMargin(), k: nth >= 3 ? "3+" : nth });
+    const maxTen = Math.max(0, Math.min(35, 70 - val("age")));
+    $("tenureHint").textContent = t("tenureHint", { n: maxTen });
+    const tenure = Math.min(val("tenure"), maxTen);
+    const loan = price * margin / 100 + mrta;
+    const termOk = tenure > 0;
+    const inst = pmt(loan, rate, tenure);
+    const total = commit + inst;
+    const dsr = income > 0 && termOk ? total / income * 100 : Infinity;
+    const st = income > 0 && termOk ? statusOf(dsr, limit) : "no";
+
+    // headline
+    $("dsrNum").textContent = pct(dsr);
+    $("dsrLim").textContent = t("limit", { n: limit });
+    const v = $("verdict");
+    v.className = "pill " + st;
+    v.textContent = income <= 0 ? t("none") : !termOk ? t("noTerm") : st === "ok" ? t("ok") : st === "edge" ? t("edge") : t("over", { n: (dsr - limit).toFixed(1) });
+
+    // gauge (0–100%)
+    const cf = income > 0 ? commit / income : 0, nf = income > 0 ? inst / income : 0;
+    $("gCommit").setAttribute("d", arc(0, cf));
+    $("gNew").setAttribute("d", arc(cf, cf + nf));
+    $("gNew").setAttribute("stroke", st === "no" ? "var(--bad)" : "var(--seg-new)");
+    const la = Math.PI * (1 - Math.min(limit, 100) / 100);
+    const l = $("gLimit");
+    l.setAttribute("x1", (CX + (R - 15) * Math.cos(la)).toFixed(2)); l.setAttribute("y1", (CY - (R - 15) * Math.sin(la)).toFixed(2));
+    l.setAttribute("x2", (CX + (R + 15) * Math.cos(la)).toFixed(2)); l.setAttribute("y2", (CY - (R + 15) * Math.sin(la)).toFixed(2));
+
+    // stats
+    const room = income * limit / 100 - commit;
+    const maxLoan = Math.max(0, pv(room, rate, tenure) - mrta);
+    const maxPrice = margin > 0 && room > 0 ? maxLoan / (margin / 100) : 0;
+    const need = requiredIncome(total);
+    $("sInst").textContent = termOk ? rm(inst) : "–";
+    $("sInstSub").textContent = t("instSub", { v: rmShort(loan) });
+    $("sMax").textContent = rmShort(maxPrice);
+    $("sMaxSub").textContent = t("maxSub", { n: limit });
+    $("sNeed").textContent = termOk && isFinite(need) ? rmShort(need) : "–";
+
+    // breakdown
+    $("bLoan").textContent = rm(loan);
+    $("bDown").textContent = rm(Math.max(0, price - price * margin / 100));
+    $("bInc").textContent = rm2(income);
+    $("bCommit").textContent = rm2(commit);
+    $("bNew").textContent = rm2(inst);
+    $("bTotal").textContent = rm2(total);
+    $("bNdi").textContent = rm2(income - total);
+
+    // stamp duty
+    const first = firstBuyer && nth === 1;
+    const exempt = first && price <= 500000;
+    const dutyMot = exempt ? 0 : motDuty(price), dutyLoan = exempt ? 0 : loanDuty(loan);
+    const dutyTotal = dutyMot + dutyLoan;
+    const downpay = Math.max(0, price - price * margin / 100);
+    $("tMot").textContent = rm(dutyMot);
+    $("tLoan").textContent = rm(dutyLoan);
+    $("tTotal").textContent = rm(dutyTotal);
+    $("tCash").textContent = rm(downpay + dutyTotal);
+    $("taxNote").textContent = t(exempt ? "taxExempt" : first ? "taxOver" : "taxStd") + " " + t("taxBase");
+
+    // rate table
+    const rates = [0, 0.5, 1, 1.5, 2].map(step => ({ step, r: +(rate + step).toFixed(3) }));
+    $("sens").innerHTML = rates.map(({ step, r }) => {
+      const m = pmt(loan, r, tenure), d = income > 0 && termOk ? (commit + m) / income * 100 : Infinity, s = statusOf(d, limit);
+      const now = step === 0;
+      return `<tr class="${now ? "cur" : ""}"><td>${+r.toFixed(3)}%${now ? " · " + t("cur") : ""}</td><td>${rm(m)}</td><td><span class="dot" style="--c:${statusColor(s)}"></span>${pct(d)}</td></tr>`;
+    }).join("");
+
+    // phone bar
+    $("mDsr").textContent = pct(dsr);
+    $("mMax").textContent = rmShort(maxPrice);  }
+
+  $("mGo").onclick = () => $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("form").addEventListener("submit", e => e.preventDefault());
+  document.addEventListener("input", calc);
+  applyPreset("std");
+  applyLang();
+})();
+</script>
+
+</body></html>
