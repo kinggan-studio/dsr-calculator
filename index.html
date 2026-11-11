@@ -11,41 +11,80 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
-/* Layout: one calm form card on the left (3 steps), a deep-green result card on the right that stays in view; on phones the result follows the form and a bottom bar shows the DSR. */
+/* Layout: one calm form card on the left (3 steps), a deep-navy result card on the right that stays in view; on phones the result follows the form and a bottom bar shows the DSR. */
 :root {
-  --bg: #edf2ef;
+  --bg: #f5f3ee;
   --surface: #ffffff;
-  --surface-2: #f4f7f5;
-  --ink: #12241e;
-  --muted: #5f716a;
-  --line: #dde5e0;
-  --accent: #0f6e56;
-  --accent-soft: #e0efe9;
+  --surface-2: #f3f1ec;
+  --ink: #141c2b;
+  --muted: #667085;
+  --line: #e4e0d6;
+  --accent: #1c3557;
+  --accent-soft: #e6ebf3;
   --accent-on: #ffffff;
-  --hero: #0e3b31;
-  --hero-ink: #f1f7f4;
-  --hero-muted: #a9c4b9;
-  --hero-line: #24574a;
-  --hero-track: #1d4c40;
-  --gold: #e8b45a;
-  --seg-commit: #7fa598;
-  --seg-new: #e8b45a;
-  --good: #5fd39a;
+  --hero: #12233f;
+  --hero-ink: #f4f1e8;
+  --hero-muted: #a8b4c8;
+  --hero-line: #2a3e61;
+  --hero-track: #1f3254;
+  --gold: #d4a84b;
+  --seg-commit: #7f93b3;
+  --seg-new: #d4a84b;
+  --good: #6fd3a0;
   --warn: #f2c14e;
   --bad: #ff8f80;
+  --ok: #1f8a5b;
   --font: "Plus Jakarta Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d1513; --surface: #15201c; --surface-2: #1b2823; --ink: #e6eeea; --muted: #97aaa2; --line: #273631;
-    --accent: #52c49f; --accent-soft: #1b3a31; --accent-on: #06261d; --hero: #0f2f27; --hero-ink: #eef6f2; --hero-muted: #9dbbb0;
-    --hero-line: #22493e; --hero-track: #1c4238; color-scheme: dark;
+    --bg: #0b1220;
+    --surface: #131c2e;
+    --surface-2: #1a2538;
+    --ink: #e9edf5;
+    --muted: #94a0b5;
+    --line: #263249;
+    --accent: #d9b45f;
+    --accent-soft: #2b3552;
+    --accent-on: #1b1405;
+    --hero: #0f1c33;
+    --hero-ink: #f2efe6;
+    --hero-muted: #9fb0c9;
+    --hero-line: #26385a;
+    --hero-track: #1b2c4b;
+    --gold: #d9b45f;
+    --seg-commit: #6f84a8;
+    --seg-new: #d9b45f;
+    --good: #6fd3a0;
+    --warn: #f2c14e;
+    --bad: #ff8f80;
+    --ok: #3fbf86;
+    color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0d1513; --surface: #15201c; --surface-2: #1b2823; --ink: #e6eeea; --muted: #97aaa2; --line: #273631;
-  --accent: #52c49f; --accent-soft: #1b3a31; --accent-on: #06261d; --hero: #0f2f27; --hero-ink: #eef6f2; --hero-muted: #9dbbb0;
-  --hero-line: #22493e; --hero-track: #1c4238; color-scheme: dark;
+  --bg: #0b1220;
+  --surface: #131c2e;
+  --surface-2: #1a2538;
+  --ink: #e9edf5;
+  --muted: #94a0b5;
+  --line: #263249;
+  --accent: #d9b45f;
+  --accent-soft: #2b3552;
+  --accent-on: #1b1405;
+  --hero: #0f1c33;
+  --hero-ink: #f2efe6;
+  --hero-muted: #9fb0c9;
+  --hero-line: #26385a;
+  --hero-track: #1b2c4b;
+  --gold: #d9b45f;
+  --seg-commit: #6f84a8;
+  --seg-new: #d9b45f;
+  --good: #6fd3a0;
+  --warn: #f2c14e;
+  --bad: #ff8f80;
+  --ok: #3fbf86;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body {
@@ -541,7 +580,7 @@ table.sens { width: 100%; border-collapse: collapse; font-size: 13.5px; }
     return best;
   }
   const statusOf = (d, lim) => !isFinite(d) ? "no" : d > lim ? "no" : d > lim - 5 ? "edge" : "ok";
-  const statusColor = s => s === "ok" ? "var(--accent)" : s === "edge" ? "#c98a12" : "#c0392b";
+  const statusColor = s => s === "ok" ? "var(--ok)" : s === "edge" ? "#c98a12" : "#c0392b";
 
   // ---------- gauge ----------
   const CX = 120, CY = 120, R = 96;
